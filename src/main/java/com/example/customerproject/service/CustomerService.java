@@ -6,10 +6,13 @@ import java.util.List;
 
 public interface CustomerService {
 
-    List<Customer> findAll();
-    void  save (Customer customer);
-    Customer findById(int id);
-    void update (int id, Customer customer);
-    void remote (int id);
+    public void insert (Customer customer);
+    public  Customer selectById (int id);
+
+    public List <Customer> findAll();
+
+    public boolean delete(int id);
+
+    public boolean update (Customer customer);
 
 }

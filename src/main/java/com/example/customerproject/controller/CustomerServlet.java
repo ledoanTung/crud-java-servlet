@@ -48,7 +48,7 @@ public class CustomerServlet extends HttpServlet {
     private void viewCustomer(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 
         int id = Integer.parseInt(req.getParameter("id"));
-        Customer customer = this.customerService.findById(id);
+        Customer customer = this.customerService.selectById(id);
         RequestDispatcher requestDispatcher;
 
         if (customer == null){
@@ -62,7 +62,7 @@ public class CustomerServlet extends HttpServlet {
 
     private void formDeleteCustomer(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         int id = Integer.parseInt(req.getParameter("id"));
-        Customer customer = this.customerService.findById(id);
+        Customer customer = this.customerService.selectById(id);
 
         RequestDispatcher requestDispatcher;
 
@@ -77,7 +77,7 @@ public class CustomerServlet extends HttpServlet {
 
     private void formEditCustomer(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         int id = Integer.parseInt(req.getParameter("id"));
-        Customer customer = this.customerService.findById(id);
+        Customer customer = this.customerService.selectById(id);
         System.out.println("++++++++++++"+customer) ;
         RequestDispatcher requestDispatcher;
         if (customer == null){
@@ -133,14 +133,14 @@ public class CustomerServlet extends HttpServlet {
 
     private void deleteCustomer(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         int id = Integer.parseInt(req.getParameter("id"));
-        Customer customer = this.customerService.findById(id);
+        Customer customer = this.customerService.selectById(id);
 
         RequestDispatcher requestDispatcher;
 
         if (customer == null){
             requestDispatcher = req.getRequestDispatcher("error.jsp");
         }else {
-            this.customerService.remote(id);
+            this.customerService.delete(id);
             resp.sendRedirect("/customers");
         }
 
@@ -153,7 +153,7 @@ public class CustomerServlet extends HttpServlet {
         String email = req.getParameter("email");
         String address = req.getParameter("address");
 
-        Customer customer = this.customerService.findById(id);
+        Customer customer = this.customerService.selectById(id);
         System.out.println("__________" +customer);
         RequestDispatcher requestDispatcher;
 
@@ -163,7 +163,7 @@ public class CustomerServlet extends HttpServlet {
             customer.setName(name);
             customer.setEmail(email);
             customer.setAddress(address);
-            this.customerService.save(customer);
+            this.customerService.update(customer);
             req.setAttribute("customer", customer);
             req.setAttribute(
                     "message", "Customer information was updated"
@@ -180,11 +180,9 @@ public class CustomerServlet extends HttpServlet {
         String email = req.getParameter("email");
         String address = req.getParameter("address");
 
-        int id = (int) (Math.random() *10000);
+        Customer customer = new Customer(name,email,address);
 
-        Customer customer = new Customer(id,name,email,address);
-
-        this.customerService.save(customer);
+        this.customerService.insert(customer);
         RequestDispatcher requestDispatcher
                 = req.getRequestDispatcher("/customer/create.jsp");
         req.setAttribute("message","Create new customer success");

@@ -2,46 +2,131 @@ package com.example.customerproject.service;
 
 import com.example.customerproject.model.Customer;
 
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class CustomerServiceImpl implements CustomerService{
-    private static Map<Integer,Customer> customers;
+    private String jdbcURL = "jdbc:mysql://localhost:3306/dbtest?useSSL=false";
+    private String jdbcUsername = "root";
+    private String jdbcPassword = "root";
+    private static final String INSERT_CUSTOMER_SQL
+            = "insert into customer (name, email, address) values (?,?,?);";
+    private static final String SELECT_CUSTOMER_BY_ID
+            = "select name,email,address from customer where id = ?";
+    private static final String SELECT_ALL_CUSTOMER
+            ="select * from customer";
+    private static final String DELETE_CUSTOMER
+            ="delete from customer where id = ?;";
+    private static final String UPDATE_CUSTOMER
+            ="update customer set name =?, email = ?, address = ? where id = ?;";
 
-    static {
-        customers = new HashMap<>();
-        customers.put(1, new Customer(1, "John", "john@gmail.vn", "Hanoi"));
-        customers.put(2, new Customer(2, "Bill", "bill@gmail.vn", "Danang"));
-        customers.put(3, new Customer(3, "Alex", "alex@gmail.vn", "Saigon"));
-        customers.put(4, new Customer(4, "Adam", "adam@gmail.vn", "Beijin"));
-        customers.put(5, new Customer(5, "Sophia", "sophia@gmail.vn", "Miami"));
-        customers.put(6, new Customer(6, "Rose", "rose@gmail.vn", "Newyork"));
+    protected Connection getConnect() throws ClassNotFoundException, SQLException {
+        Connection connection = null;
+
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        connection = DriverManager.getConnection(jdbcURL,jdbcUsername,jdbcPassword);
+        return connection;
+    }
+
+    @Override
+    public void insert(Customer customer) {
+        Connection connection = null;
+        try {
+            connection = getConnect();
+            PreparedStatement preparedStatement =connection.prepareStatement(INSERT_CUSTOMER_SQL);
+            preparedStatement.setString(1,customer.getName());
+            preparedStatement.setString(2,customer.getEmail());
+            preparedStatement.setString(3,customer.getAddress());
+            preparedStatement.executeUpdate();
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public Customer selectById(int id) {
+        Customer customer = null;
+        try {
+            Connection connection = getConnect();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_CUSTOMER_BY_ID);
+
+            preparedStatement.setInt(1,id);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                String name = resultSet.getString("name");
+                String email = resultSet.getString("email");
+                String address = resultSet.getString("address");
+                customer = new Customer(id, name, email, address);
+            }
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        return customer;
     }
 
     @Override
     public List<Customer> findAll() {
-        return new ArrayList<>(customers.values());
+        List<Customer> customers = new ArrayList<>();
+        try {
+            Connection connection = getConnect();
+            PreparedStatement preparedStatement = connection.prepareStatement(SELECT_ALL_CUSTOMER);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            while (resultSet.next()){
+                int id =  resultSet.getInt("id");
+                String name = resultSet.getString("name");
+                String email = resultSet.getString("email");
+                String address = resultSet.getString("address");
+                customers.add(new Customer(id,name,email,address));
+            }
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return customers;
     }
 
     @Override
-    public void save(Customer customer) {
-        customers.put(customer.getId(), customer);
+    public boolean delete(int id) {
+        boolean check;
+        try {
+            Connection connection = getConnect();
+            PreparedStatement preparedStatement = connection.prepareStatement(DELETE_CUSTOMER);
+            preparedStatement.setInt(1,id);
+            check = preparedStatement.executeUpdate() >0;
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return check;
     }
 
     @Override
-    public Customer findById(int id) {
-        return customers.get(id);
+    public boolean update(Customer customer) {
+        boolean check ;
+        try {
+            Connection connection = getConnect();
+            PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CUSTOMER);
+            preparedStatement.setString(1, customer.getName());
+            preparedStatement.setString(2, customer.getEmail());
+            preparedStatement.setString(3, customer.getAddress());
+            preparedStatement.setInt(4, customer.getId());
+            check = preparedStatement.executeUpdate()> 0;
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        return check;
     }
 
-    @Override
-    public void update(int id, Customer customer) {
-        customers.put(customer.getId(), customer);
-    }
-
-    @Override
-    public void remote(int id) {
-        customers.remove(id);
-    }
 }
